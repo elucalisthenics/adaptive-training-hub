@@ -1,87 +1,62 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/layout/AppShell";
-import { ExerciseCard } from "@/components/training/ExerciseCard";
-import { mockTodayPlan } from "@/data/mock/today";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Today — Adaptive Calisthenics Training" },
+      { title: "Adaptive Calisthenics Training" },
       {
         name: "description",
         content:
-          "Today's calisthenics session: type, duration, focus skills and prescribed exercises.",
+          "A personal adaptive calisthenics training tool: goals, equipment, sessions and progress.",
       },
-      { property: "og:title", content: "Today — Adaptive Calisthenics Training" },
+      { property: "og:title", content: "Adaptive Calisthenics Training" },
       {
         property: "og:description",
-        content: "Today's session type, duration, focus skills and prescribed exercises.",
+        content: "Personal adaptive calisthenics training: goals, equipment, sessions and progress.",
       },
     ],
   }),
-  component: TodayPage,
+  component: LandingPage,
 });
 
-function TodayPage() {
-  const plan = mockTodayPlan;
-  const sessionLabel = plan.sessionType.replace("_", " ");
+function LandingPage() {
+  const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      if (data.session) navigate({ to: "/today", replace: true });
+      else setChecked(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   return (
-    <AppShell title="Today">
-      <section className="rounded-lg border border-border bg-surface p-5">
-        <p className="label-caps">Session</p>
-        <h1 className="mt-1 text-4xl font-semibold uppercase tracking-wide">{sessionLabel}</h1>
-
-        <div className="mt-5 grid grid-cols-2 gap-4">
-          <div>
-            <p className="label-caps">Estimated</p>
-            <p className="metric mt-1 text-2xl">{plan.estimatedMinutes} min</p>
-          </div>
-          <div>
-            <p className="label-caps">Environment</p>
-            <p className="metric mt-1 text-2xl">{plan.environment}</p>
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <p className="label-caps">Focus</p>
-          <ul className="mt-2 flex flex-wrap gap-2">
-            {plan.focus.map((f) => (
-              <li
-                key={f}
-                className="rounded-md border border-border bg-surface-raised px-3 py-1.5 text-sm"
-              >
-                {f}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <div className="mt-6 space-y-6">
-        {plan.blocks.map((block) => (
-          <section key={block.id}>
-            <h2 className="label-caps">{block.title}</h2>
-            <div className="mt-2 space-y-2">
-              {block.exercises.map((exercise) => (
-                <ExerciseCard key={exercise.id} exercise={exercise} />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-
-      <div className="sticky bottom-20 mt-8 md:bottom-4">
-        <button
-          type="button"
-          className="min-h-14 w-full rounded-lg bg-primary text-base font-semibold uppercase tracking-[0.18em] text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          Start Workout
-        </button>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          Mock session — the training engine is not implemented yet.
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <p className="label-caps text-muted-foreground">Personal training tool</p>
+        <h1 className="mt-2 font-display text-5xl font-semibold uppercase tracking-wide">
+          Adaptive Calisthenics
+        </h1>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Goals, equipment, environment and sessions in one place. Built for serious, repeatable
+          training — not for scrolling.
         </p>
+        {checked && (
+          <Link
+            to="/auth"
+            className="mt-8 inline-flex min-h-14 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold uppercase tracking-[0.18em] text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
-    </AppShell>
+    </main>
   );
 }
