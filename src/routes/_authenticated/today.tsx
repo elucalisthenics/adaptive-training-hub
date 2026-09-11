@@ -3,7 +3,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ExerciseCard } from "@/components/training/ExerciseCard";
 import { mockTodayPlan } from "@/data/mock/today";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/today")({
   head: () => ({
     meta: [
       { title: "Today — Adaptive Calisthenics Training" },

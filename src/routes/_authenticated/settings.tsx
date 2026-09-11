@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { checkBackendConnection } from "@/data/backend-health";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_authenticated/_authenticated/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Adaptive Calisthenics Training" },
