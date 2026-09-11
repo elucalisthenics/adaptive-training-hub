@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedProgramRouteImport } from './routes/_authenticated/program'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -26,6 +28,16 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProgramRoute = AuthenticatedProgramRouteImport.update({
   id: '/program',
@@ -60,6 +72,8 @@ const AuthenticatedWeakPointsRoute = AuthenticatedWeakPointsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/program': typeof AuthenticatedProgramRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -69,6 +83,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/program': typeof AuthenticatedProgramRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -80,6 +96,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/program': typeof AuthenticatedProgramRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -91,6 +109,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/onboarding'
     | '/program'
     | '/progress'
     | '/settings'
@@ -100,6 +120,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
+    | '/onboarding'
     | '/program'
     | '/progress'
     | '/settings'
@@ -110,6 +132,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/onboarding'
     | '/_authenticated/program'
     | '/_authenticated/progress'
     | '/_authenticated/settings'
@@ -121,6 +145,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -138,6 +163,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/program': {
       id: '/_authenticated/program'
@@ -185,6 +224,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProgramRoute: typeof AuthenticatedProgramRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -194,6 +234,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProgramRoute: AuthenticatedProgramRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -208,6 +249,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
