@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { PlaceholderPage } from "@/components/ui/PlaceholderPage";
 
-export const Route = createFileRoute("/_authenticated/_authenticated/weak-points")({
+export const Route = createFileRoute("/_authenticated/weak-points")({
   head: () => ({
     meta: [
       { title: "Weak Points — Adaptive Calisthenics Training" },

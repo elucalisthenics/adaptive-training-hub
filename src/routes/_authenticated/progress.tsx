@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { PlaceholderPage } from "@/components/ui/PlaceholderPage";
 
-export const Route = createFileRoute("/_authenticated/_authenticated/progress")({
+export const Route = createFileRoute("/_authenticated/progress")({
   head: () => ({
     meta: [
       { title: "Progress — Adaptive Calisthenics Training" },
