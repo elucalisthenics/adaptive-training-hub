@@ -11,17 +11,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const availability = z.enum(["always", "sometimes", "gym_only", "home_only"]);
 const priority = z.enum(["primary", "secondary", "maintenance"]);
 
-function startOfTodayIso() {
+/** Local calendar date as YYYY-MM-DD, used as the daily context key. */
+function todayDate() {
   const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  return d.toISOString();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
 }
 
-function endOfTodayIso() {
-  const d = new Date();
-  d.setUTCHours(23, 59, 59, 999);
-  return d.toISOString();
-}
 
 /** Reference data needed by the setup screens. */
 export const getReferenceData = createServerFn({ method: "GET" })
@@ -143,28 +140,30 @@ export const saveEquipment = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Today's planned session context: environment, surface and available equipment. */
+/**
+ * Today's training context: where the athlete trains today, the ground,
+ * available minutes and the equipment actually at hand.
+ * Stored in daily_training_context — NOT in workouts. A workouts row must
+ * always represent a real, intentionally created session.
+ */
 export const getTodaySetup = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("workouts")
-      .select("id,environment_type,surface_type,planned_duration_minutes,status,planned_at")
+      .from("daily_training_context")
+      .select("id,context_date,location,surface_type,available_minutes")
       .eq("user_id", context.userId)
-      .gte("planned_at", startOfTodayIso())
-      .lte("planned_at", endOfTodayIso())
-      .order("planned_at", { ascending: false })
-      .limit(1)
+      .eq("context_date", todayDate())
       .maybeSingle();
     if (error) throw error;
-    if (!data) return { workout: null, equipmentIds: [] as string[] };
+    if (!data) return { context: null, equipmentIds: [] as string[] };
 
     const eq = await context.supabase
-      .from("workout_available_equipment")
+      .from("daily_training_context_equipment")
       .select("equipment_id")
-      .eq("workout_id", data.id);
+      .eq("daily_training_context_id", data.id);
     if (eq.error) throw eq.error;
-    return { workout: data, equipmentIds: eq.data.map((r) => r.equipment_id) };
+    return { context: data, equipmentIds: eq.data.map((r) => r.equipment_id) };
   });
 
 export const saveTodaySetup = createServerFn({ method: "POST" })
@@ -172,62 +171,48 @@ export const saveTodaySetup = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
       .object({
-        environment_type: z.enum(["home", "gym", "outdoor", "travel"]),
+        location: z.enum(["home", "gym", "outdoor", "travel"]),
         surface_type: z.enum(["hard", "soft", "mixed", "unknown"]),
-        planned_duration_minutes: z.number().int().min(20).max(180),
+        available_minutes: z.number().int().min(20).max(180),
         equipment_ids: z.array(z.string().uuid()).max(50),
       })
       .parse(data),
   )
   .handler(async ({ context, data }) => {
-    const existing = await context.supabase
-      .from("workouts")
-      .select("id")
-      .eq("user_id", context.userId)
-      .gte("planned_at", startOfTodayIso())
-      .lte("planned_at", endOfTodayIso())
-      .order("planned_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (existing.error) throw existing.error;
-
-    const fields = {
-      environment_type: data.environment_type,
-      surface_type: data.surface_type,
-      planned_duration_minutes: data.planned_duration_minutes,
-    };
-
-    let workoutId = existing.data?.id;
-    if (workoutId) {
-      const upd = await context.supabase.from("workouts").update(fields).eq("id", workoutId);
-      if (upd.error) throw upd.error;
-    } else {
-      const ins = await context.supabase
-        .from("workouts")
-        .insert({
+    const upsert = await context.supabase
+      .from("daily_training_context")
+      .upsert(
+        {
           user_id: context.userId,
-          workout_type: "pull_heavy" as const,
-          status: "planned" as const,
-          planned_at: new Date().toISOString(),
-          ...fields,
-        })
-        .select("id")
-        .single();
-      if (ins.error) throw ins.error;
-      workoutId = ins.data.id;
-    }
+          context_date: todayDate(),
+          location: data.location,
+          surface_type: data.surface_type,
+          available_minutes: data.available_minutes,
+        },
+        { onConflict: "user_id,context_date" },
+      )
+      .select("id")
+      .single();
+    if (upsert.error) throw upsert.error;
+    const contextId = upsert.data.id;
 
     const del = await context.supabase
-      .from("workout_available_equipment")
+      .from("daily_training_context_equipment")
       .delete()
-      .eq("workout_id", workoutId);
+      .eq("daily_training_context_id", contextId);
     if (del.error) throw del.error;
 
     if (data.equipment_ids.length > 0) {
       const ins = await context.supabase
-        .from("workout_available_equipment")
-        .insert(data.equipment_ids.map((equipment_id) => ({ workout_id: workoutId!, equipment_id })));
+        .from("daily_training_context_equipment")
+        .insert(
+          data.equipment_ids.map((equipment_id) => ({
+            daily_training_context_id: contextId,
+            equipment_id,
+          })),
+        );
       if (ins.error) throw ins.error;
     }
-    return { ok: true, workoutId };
+    return { ok: true, contextId };
   });
+
