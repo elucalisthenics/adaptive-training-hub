@@ -120,6 +120,75 @@ export type Database = {
           },
         ]
       }
+      daily_training_context: {
+        Row: {
+          available_minutes: number
+          context_date: string
+          created_at: string
+          id: string
+          location: string
+          surface_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_minutes?: number
+          context_date?: string
+          created_at?: string
+          id?: string
+          location?: string
+          surface_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_minutes?: number
+          context_date?: string
+          created_at?: string
+          id?: string
+          location?: string
+          surface_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_training_context_equipment: {
+        Row: {
+          created_at: string
+          daily_training_context_id: string
+          equipment_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_training_context_id: string
+          equipment_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          daily_training_context_id?: string
+          equipment_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_training_context_equipment_daily_training_context_id_fkey"
+            columns: ["daily_training_context_id"]
+            isOneToOne: false
+            referencedRelation: "daily_training_context"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_training_context_equipment_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           created_at: string
