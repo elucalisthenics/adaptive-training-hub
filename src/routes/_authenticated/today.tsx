@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+
 import { AppShell } from "@/components/layout/AppShell";
 import { ExerciseCard } from "@/components/training/ExerciseCard";
+import { TodaySetupCard } from "@/components/setup/TodaySetupCard";
 import { mockTodayPlan } from "@/data/mock/today";
+import { getTodaySetup } from "@/lib/athlete.functions";
 
 export const Route = createFileRoute("/_authenticated/today")({
   head: () => ({
@@ -25,6 +30,9 @@ export const Route = createFileRoute("/_authenticated/today")({
 function TodayPage() {
   const plan = mockTodayPlan;
   const sessionLabel = plan.sessionType.replace("_", " ");
+  const todayFn = useServerFn(getTodaySetup);
+  const todayQuery = useQuery({ queryKey: ["today-setup"], queryFn: () => todayFn() });
+  const ctx = todayQuery.data?.context;
 
   return (
     <AppShell title="Today">
@@ -34,12 +42,22 @@ function TodayPage() {
 
         <div className="mt-5 grid grid-cols-2 gap-4">
           <div>
-            <p className="label-caps">Estimated</p>
-            <p className="metric mt-1 text-2xl">{plan.estimatedMinutes} min</p>
+            <p className="label-caps">Available</p>
+            <p className="metric mt-1 text-2xl">
+              {ctx ? `${ctx.available_minutes} min` : `${plan.estimatedMinutes} min`}
+            </p>
           </div>
           <div>
-            <p className="label-caps">Environment</p>
-            <p className="metric mt-1 text-2xl">{plan.environment}</p>
+            <p className="label-caps">Location</p>
+            <p className="metric mt-1 text-2xl">{ctx ? ctx.location : plan.environment}</p>
+          </div>
+          <div>
+            <p className="label-caps">Surface</p>
+            <p className="metric mt-1 text-2xl">{ctx ? ctx.surface_type : "not set"}</p>
+          </div>
+          <div>
+            <p className="label-caps">Equipment today</p>
+            <p className="metric mt-1 text-2xl">{todayQuery.data?.equipmentIds.length ?? 0}</p>
           </div>
         </div>
 
@@ -58,6 +76,10 @@ function TodayPage() {
         </div>
       </section>
 
+      <div className="mt-6">
+        <TodaySetupCard />
+      </div>
+
       <div className="mt-6 space-y-6">
         {plan.blocks.map((block) => (
           <section key={block.id}>
@@ -74,7 +96,8 @@ function TodayPage() {
       <div className="sticky bottom-20 mt-8 md:bottom-4">
         <button
           type="button"
-          className="min-h-14 w-full rounded-lg bg-primary text-base font-semibold uppercase tracking-[0.18em] text-primary-foreground transition-opacity hover:opacity-90"
+          disabled
+          className="min-h-14 w-full rounded-lg bg-primary text-base font-semibold uppercase tracking-[0.18em] text-primary-foreground transition-opacity disabled:opacity-50"
         >
           Start Workout
         </button>

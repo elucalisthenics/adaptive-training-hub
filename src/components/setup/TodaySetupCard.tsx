@@ -3,13 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
-import { getReferenceData } from "@/lib/athlete.functions";
-import { getTodaySetup, saveTodaySetup } from "@/lib/athlete.functions";
+import { getReferenceData, getTodaySetup, saveTodaySetup } from "@/lib/athlete.functions";
 
-const ENVIRONMENTS = ["home", "gym", "outdoor", "travel"] as const;
+const LOCATIONS = ["home", "gym", "outdoor", "travel"] as const;
 const SURFACES = ["hard", "soft", "mixed", "unknown"] as const;
 
-type Environment = (typeof ENVIRONMENTS)[number];
+type Location = (typeof LOCATIONS)[number];
 type Surface = (typeof SURFACES)[number];
 
 const chip = "min-h-11 rounded-md border px-3 text-sm transition-colors";
@@ -23,18 +22,17 @@ export function TodaySetupCard() {
   const referenceQuery = useQuery({ queryKey: ["reference-data"], queryFn: () => reference() });
   const todayQuery = useQuery({ queryKey: ["today-setup"], queryFn: () => todayFn() });
 
-  const [environment, setEnvironment] = useState<Environment>("outdoor");
+  const [location, setLocation] = useState<Location>("outdoor");
   const [surface, setSurface] = useState<Surface>("hard");
   const [minutes, setMinutes] = useState("70");
   const [equipmentIds, setEquipmentIds] = useState<string[]>([]);
 
   const today = todayQuery.data;
   useEffect(() => {
-    if (!today?.workout) return;
-    if (today.workout.environment_type) setEnvironment(today.workout.environment_type as Environment);
-    if (today.workout.surface_type) setSurface(today.workout.surface_type as Surface);
-    if (today.workout.planned_duration_minutes)
-      setMinutes(String(today.workout.planned_duration_minutes));
+    if (!today?.context) return;
+    setLocation(today.context.location as Location);
+    setSurface(today.context.surface_type as Surface);
+    setMinutes(String(today.context.available_minutes));
     setEquipmentIds(today.equipmentIds);
   }, [today]);
 
@@ -42,9 +40,9 @@ export function TodaySetupCard() {
     mutationFn: () =>
       save({
         data: {
-          environment_type: environment,
+          location,
           surface_type: surface,
-          planned_duration_minutes: Number(minutes),
+          available_minutes: Number(minutes),
           equipment_ids: equipmentIds,
         },
       }),
@@ -63,20 +61,21 @@ export function TodaySetupCard() {
     <section className="rounded-lg border border-border bg-surface p-4">
       <h2 className="label-caps">Today&rsquo;s setup</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Where you train today, the ground you have, and what equipment is actually available.
+        Where you train today, the ground you have, and what equipment is actually available. Saved
+        as today&rsquo;s training context — it does not create a workout.
       </p>
 
       <div className="mt-4 space-y-4">
         <div>
-          <p className="label-caps">Environment</p>
+          <p className="label-caps">Location</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {ENVIRONMENTS.map((e) => (
+            {LOCATIONS.map((e) => (
               <button
                 key={e}
                 type="button"
-                onClick={() => setEnvironment(e)}
+                onClick={() => setLocation(e)}
                 className={`${chip} ${
-                  environment === e
+                  location === e
                     ? "border-primary bg-surface-raised text-primary"
                     : "border-border text-muted-foreground"
                 }`}
