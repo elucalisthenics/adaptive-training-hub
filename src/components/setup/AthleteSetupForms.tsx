@@ -143,13 +143,21 @@ export function GoalsForm({ onSaved }: { onSaved?: () => void }) {
     setSelection(next);
   }, [goals]);
 
+  const chosen = Object.entries(selection).filter(([, p]) => p !== "none");
+  const primaryCount = chosen.filter(([, p]) => p === "primary").length;
+  const secondaryCount = chosen.filter(([, p]) => p === "secondary").length;
+  const limitError =
+    primaryCount > 2
+      ? "At most 2 primary goals are allowed"
+      : secondaryCount > 2
+        ? "At most 2 secondary goals are allowed"
+        : null;
+
   const mutation = useMutation({
     mutationFn: () =>
       save({
         data: {
-          goals: Object.entries(selection)
-            .filter(([, p]) => p !== "none")
-            .map(([skill_id, p]) => ({ skill_id, priority: p as Priority })),
+          goals: chosen.map(([skill_id, p]) => ({ skill_id, priority: p as Priority })),
         },
       }),
     onSuccess: () => {
@@ -161,7 +169,10 @@ export function GoalsForm({ onSaved }: { onSaved?: () => void }) {
   });
 
   return (
-    <Section title="Training goals" description="Set a priority per skill. Leave as none to ignore.">
+    <Section
+      title="Training goals"
+      description="Set a priority per skill. Maximum 2 primary and 2 secondary goals."
+    >
       <div className="space-y-3">
         {referenceQuery.data?.skills.map((skill) => (
           <div key={skill.id} className="flex items-center justify-between gap-3">
@@ -182,10 +193,14 @@ export function GoalsForm({ onSaved }: { onSaved?: () => void }) {
             </select>
           </div>
         ))}
+        <p className="metric text-xs text-muted-foreground">
+          Primary {primaryCount}/2 · Secondary {secondaryCount}/2
+        </p>
+        {limitError && <p className="text-sm text-destructive">{limitError}</p>}
         <button
           type="button"
           className={buttonClass}
-          disabled={mutation.isPending}
+          disabled={mutation.isPending || Boolean(limitError)}
           onClick={() => mutation.mutate()}
         >
           {mutation.isPending ? "Saving…" : "Save goals"}
@@ -194,6 +209,7 @@ export function GoalsForm({ onSaved }: { onSaved?: () => void }) {
     </Section>
   );
 }
+
 
 export function EquipmentForm({ onSaved }: { onSaved?: () => void }) {
   const queryClient = useQueryClient();
