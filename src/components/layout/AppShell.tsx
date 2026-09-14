@@ -10,13 +10,14 @@ import {
 } from "lucide-react";
 
 const NAV = [
-  { to: "/", label: "Today", icon: CalendarDays },
+  { to: "/today", label: "Today", icon: CalendarDays },
   { to: "/program", label: "Program", icon: Dumbbell },
   { to: "/skills", label: "Skills", icon: Target },
   { to: "/progress", label: "Progress", icon: LineChart },
   { to: "/weak-points", label: "Weak", icon: TriangleAlert },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
+
 
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -39,7 +40,8 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
             <Link
               key={to}
               to={to}
-              activeOptions={{ exact: to === "/" }}
+              activeOptions={{ exact: false }}
+
               activeProps={{ className: "text-primary border-primary" }}
               inactiveProps={{ className: "text-muted-foreground border-transparent" }}
               className="label-caps border-b-2 px-4 py-3 transition-colors hover:text-foreground"
@@ -59,7 +61,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
             <Link
               key={to}
               to={to}
-              activeOptions={{ exact: to === "/" }}
+              activeOptions={{ exact: false }}
               activeProps={{ className: "text-primary" }}
               inactiveProps={{ className: "text-muted-foreground" }}
               className="flex min-h-16 flex-col items-center justify-center gap-1 text-[0.625rem] uppercase tracking-widest"

@@ -89,8 +89,15 @@ export const saveGoals = createServerFn({ method: "POST" })
       .object({
         goals: z.array(z.object({ skill_id: z.string().uuid(), priority })).max(12),
       })
+      .refine((v) => v.goals.filter((g) => g.priority === "primary").length <= 2, {
+        message: "At most 2 primary goals are allowed",
+      })
+      .refine((v) => v.goals.filter((g) => g.priority === "secondary").length <= 2, {
+        message: "At most 2 secondary goals are allowed",
+      })
       .parse(data),
   )
+
   .handler(async ({ context, data }) => {
     const del = await context.supabase
       .from("goals")
