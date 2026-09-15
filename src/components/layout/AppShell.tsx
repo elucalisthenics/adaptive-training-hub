@@ -40,7 +40,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
             {title}
           </span>
           <span className="metric text-xs text-muted-foreground">
-            {new Date().toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" })}
+            {today}
           </span>
         </div>
       </header>
