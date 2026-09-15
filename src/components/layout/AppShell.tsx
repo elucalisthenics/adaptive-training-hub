@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   CalendarDays,
   Dumbbell,
@@ -20,6 +20,18 @@ const NAV = [
 
 
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
+  // Rendered after hydration only: server and client clocks/locales differ.
+  const [today, setToday] = useState("");
+  useEffect(() => {
+    setToday(
+      new Date().toLocaleDateString(undefined, {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+      }),
+    );
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
@@ -28,7 +40,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
             {title}
           </span>
           <span className="metric text-xs text-muted-foreground">
-            {new Date().toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" })}
+            {today}
           </span>
         </div>
       </header>
