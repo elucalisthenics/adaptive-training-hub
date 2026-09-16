@@ -4,9 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  // Client-only: this page is the redirect target of the client-side auth gate,
-  // so server HTML and client render would otherwise disagree on first paint.
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Sign in — Adaptive Calisthenics Training" },
